@@ -4,7 +4,7 @@
     <div class="media">
       <div class="media-left">
         <p class="image is-32x32">
-          <img src="../assets/user.png" alt>
+          <img src="../assets/user.png">
         </p>
       </div>
       <div class="media-content">
@@ -21,7 +21,12 @@
 
 <script>
 export default {
-  props: ['activity']
+  props: {
+    activity: {
+      type: Object,
+      required: true
+    }
+  }
 };
 </script>
 

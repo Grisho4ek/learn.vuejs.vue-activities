@@ -1,9 +1,11 @@
+<!-- lesson 29 -->
 <template>
   <div id="activityApp">
     <nav class="navbar is-white topNav">
       <div class="container">
         <div class="navbar-brand">
-          <h1>Activity Planner</h1>
+          <h1>{{ fullAppName }}</h1>
+          <!-- <h1>{{ watchedAppName }}</h1> -->
         </div>
       </div>
     </nav>
@@ -21,50 +23,13 @@
     <section class="container">
       <div class="columns">
         <div class="column is-3">
-          <a
-            class="button is-primary is-block is-alt is-large"
-            href="#"
-            @click="toggleFormDisplay"
-            v-if="!isFormDisplayed"
-          >New Activity</a>
-          <div class="create-form" v-if="isFormDisplayed">
-            <h2>Create Activity</h2>
-            <form>
-              <div class="field">
-                <label class="label">Title</label>
-                <div class="control">
-                  <input
-                    class="input"
-                    type="text"
-                    placeholder="Read a Book"
-                    v-model="newActivity.title"
-                  >
-                </div>
-              </div>
-              <div class="field">
-                <label class="label">Notes</label>
-                <div class="control">
-                  <textarea
-                    class="textarea"
-                    placeholder="Write some notes here"
-                    v-model="newActivity.notes"
-                  ></textarea>
-                </div>
-              </div>
-              <div class="field is-grouped">
-                <div class="control">
-                  <button class="button is-link" @click.prevent="createActivity">Create Activity</button>
-                </div>
-                <div class="control">
-                  <button class="button is-text" @click="toggleFormDisplay">Cancel</button>
-                </div>
-              </div>
-            </form>
-          </div>
+          <ActivityCreate :categories="categories" @activityCreated="addActivity" />
         </div>
         <div class="column is-9">
           <div class="box content">
-            <ActivityItem v-for='activity in activities' :activity="activity" :key="activity.id"></ActivityItem>
+            <ActivityItem v-for="activity in activities" :key="activity.id" :activity="activity" />
+            <div class="activity-length">Currently {{ activityLength }} activities</div>
+            <div class="activity-motivation">{{ activityMotivation }}</div>
           </div>
         </div>
       </div>
@@ -73,56 +38,57 @@
 </template>
 
 <script>
-import ActivityItem from './components/ActivityItem';
+import Vue from 'vue';
+
+import ActivityItem from "@/components/ActivityItem";
+import ActivityCreate from "@/components/ActivityCreate";
+import { fetchActivities, fetchUser, fetchCategories } from "@/api";
 
 export default {
-  name: "app",
-  components: {ActivityItem},
+  name: "App",
+  components: { ActivityItem, ActivityCreate},
   data() {
     return {
-      message: "Hello Vue!",
-      titleMessage: "Title Message Vue!!!!!",
-      isFormDisplayed: false,
-      newActivity: {
-        title: "",
-        notes: ""
-      },
-      user: {
-        name: "Filip Jerga",
-        id: "-Aj34jknvncx98812"
-      },
-      activities: {
-        "1546968934": {
-          id: "1546968934",
-          title: "Learn Vue.js",
-          notes: "I started today and it was not good.",
-          progress: 0,
-          category: "1546969049",
-          createdAt: 1546969144391,
-          updatedAt: 1546969144391
-        },
-        "1546969212": {
-          id: "1546969212",
-          title: "Read Witcher Books",
-          notes: "These books are super nice",
-          progress: 0,
-          category: "1546969049",
-          createdAt: 1546969144391,
-          updatedAt: 1546969144391
-        }
-      },
-      categories: {
-        "1546969049": { text: "books" },
-        "1546969225": { text: "movies" }
-      }
+      creator: "Grygorii Shevchenko",
+      appName: "Activity Planner",
+      watchedAppName: "Activity Planner by Grygorii Shevchenko",
+      user: {},
+      activities: {}
     };
   },
-  methods: {
-    toggleFormDisplay: function() {
-      this.isFormDisplayed = !this.isFormDisplayed;
+  computed: {
+    fullAppName() {
+      return `${this.appName} by ${this.creator}`;
     },
-    createActivity: function() {
-      console.log(this.newActivity);
+    activityLength() {
+      return Object.keys(this.activities).length;
+    },
+    activityMotivation() {
+      if (this.activityLength && this.activityLength < 5) {
+        return `Nice to see some activities`;
+      } else if (this.activityLength >= 5) {
+        return `So many activities! Good Job`;
+      } else {
+        return `No activities, so sad :(`;
+      }
+    }
+  },
+  created() {
+    fetchActivities()
+      .then((activities) => {
+        this.activities = activities;
+      })
+      .catch(error => {
+        console.log(error);
+
+      });
+
+    this.user = fetchUser();
+    this.categories = fetchCategories();
+  },
+  methods: {
+    addActivity(newActivity){
+      Vue.set(this.activities, newActivity.id, newActivity);
     }
   }
 };
@@ -144,7 +110,12 @@ body {
 footer {
   background-color: #f2f6fa !important;
 }
-
+.activity-length {
+  display: inline-block;
+}
+.activity-motivation {
+  float: right;
+}
 .example-wrapper {
   margin-left: 30px;
 }
