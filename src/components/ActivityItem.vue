@@ -1,36 +1,49 @@
 <template>
-  <article class="post">
-    <h4>{{ activity.title }}</h4>
-    <div class="media">
-      <div class="media-left">
-        <p class="image is-32x32">
-          <img src="../assets/user.png">
-        </p>
-      </div>
-      <div class="media-content">
-        <div class="content">
-          <p>
-            <a href="#">Filip Jerga</a>
-            updated {{ activity.updatedAt }} minutes ago &nbsp;
-          </p>
-        </div>
-      </div>
-    </div>
-  </article>
+  <div>
+    <ActivityItemUpdate v-if="isUpdateActive"
+                        :activity="activity" 
+                        :categories="categories"
+                        @toggleUpdate="changeUpdateState" />
+    <ActivityItemDetail v-else
+                        :activity="activity" 
+                        :categories="categories"
+                        @toggleUpdate="changeUpdateState" />
+  </div>
 </template>
 
 <script>
+import ActivityItemDetail from './ActivityItemDetail'
+import ActivityItemUpdate from './ActivityItemUpdate'
 export default {
+  components: {
+    ActivityItemDetail,
+    ActivityItemUpdate
+  },
   props: {
-    activity: {
+    activity:{
       type: Object,
-      required: true
+      required:true
+    },
+    categories: {
+      required:true,
+      type: Object
+    }
+  },
+  data() {
+    return {
+      isUpdateActive: false
+    }
+  },
+  methods: {
+    changeUpdateState(isUpdated){
+        this.isUpdateActive = isUpdated
     }
   }
-};
+}
 </script>
 
 <style scoped>
+
 </style>
 
 

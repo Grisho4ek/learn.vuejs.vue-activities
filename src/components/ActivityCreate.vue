@@ -30,7 +30,11 @@
           <div class="control">
             <select v-model="newActivity.category" class="select">
               <option value disabled>Please Select One</option>
-              <option v-for="category in categories" :key="category.id">{{ category.text }}</option>
+              <option
+                v-for="category in categories"
+                :key="category.id"
+                :value="category.id"
+              >{{ category.text }}</option>
             </select>
           </div>
         </div>
@@ -52,48 +56,49 @@
 </template>
 
 <script>
-import {createActivityAPI} from '@/api';
+import store from "@/store";
 export default {
-
+  name: "ActivityCreate",
   props: {
-    categories:{
+    categories: {
       type: Object,
       required: true
     }
   },
-  data(){
+  data() {
     return {
       isFormDisplayed: false,
       newActivity: {
         title: "",
         category: "",
         notes: ""
-      },
-    }
+      }
+    };
   },
   computed: {
     isFormvalid() {
-      return this.newActivity.title
-          && this.newActivity.notes
-          && this.newActivity.category;
-    },
+      return (
+        this.newActivity.title &&
+        this.newActivity.notes &&
+        this.newActivity.category
+      );
+    }
   },
   methods: {
     toggleFormDisplay: function() {
       this.isFormDisplayed = !this.isFormDisplayed;
     },
-    resetActivity: function(){
-      this.newActivity.title = '';
-      this.newActivity.category = '';
-      this.newActivity.notes = '';
+    resetActivity: function() {
+      this.newActivity.title = "";
+      this.newActivity.category = "";
+      this.newActivity.notes = "";
     },
     createActivity: function() {
-      createActivityAPI({...this.newActivity})
-        .then((activity) => {
+      store.createActivity({ ...this.newActivity })
+        .then(activity => {
           this.resetActivity();
           this.isFormDisplayed = false;
-          this.$emit('activityCreated', {...activity})
-        })
+        });
     }
   }
 };

@@ -1,4 +1,3 @@
-<!-- lesson 29 -->
 <template>
   <div id="activityApp">
     <nav class="navbar is-white topNav">
@@ -9,27 +8,32 @@
         </div>
       </div>
     </nav>
-    <nav class="navbar is-white">
-      <div class="container">
-        <div class="navbar-menu">
-          <div class="navbar-start">
-            <a class="navbar-item is-active" href="#">Newest</a>
-            <a class="navbar-item" href="#">In Progress</a>
-            <a class="navbar-item" href="#">Finished</a>
-          </div>
-        </div>
-      </div>
-    </nav>
+    <TheNavbar @filterSelected="setFilter" />
     <section class="container">
       <div class="columns">
         <div class="column is-3">
-          <ActivityCreate :categories="categories" @activityCreated="addActivity" />
+          <ActivityCreate :categories="categories" />
         </div>
         <div class="column is-9">
-          <div class="box content">
-            <ActivityItem v-for="activity in activities" :key="activity.id" :activity="activity" />
-            <div class="activity-length">Currently {{ activityLength }} activities</div>
-            <div class="activity-motivation">{{ activityMotivation }}</div>
+          <div class="box content" :class="{ 'fetching': isFetching, 'has-error': error }">
+            <div v-if="error">
+              <p class="has-text-danger">{{ error }}</p>
+            </div>
+            <div v-else>
+              <div v-if="isFetching">
+                <p class="has-text-info">Loading...</p>
+              </div>
+              <div v-if="isDataLoaded">
+                <ActivityItem v-for="activity in filteredActivities" 
+                              :key="activity.id" 
+                              :activity="activity" 
+                              :categories="categories" />
+              </div>
+              <div v-if="!isFetching">
+                <div class="activity-length">Currently {{ activityLength }} activities</div>
+                <div class="activity-motivation">{{ activityMotivation }}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -38,25 +42,51 @@
 </template>
 
 <script>
-import Vue from 'vue';
+import Vue from 'vue'
+import store from './store'
 
-import ActivityItem from "@/components/ActivityItem";
-import ActivityCreate from "@/components/ActivityCreate";
-import { fetchActivities, fetchUser, fetchCategories } from "@/api";
+import ActivityItem from "@/components/ActivityItem"
+import ActivityCreate from "@/components/ActivityCreate"
+import TheNavbar from "@/components/TheNavbar"
+import fakeApi from "@/lib/fakeApi"
 
 export default {
   name: "App",
-  components: { ActivityItem, ActivityCreate},
+  components: { ActivityItem, ActivityCreate, TheNavbar},
   data() {
+    const { state: { activities, categories } } = store;
     return {
       creator: "Grygorii Shevchenko",
       appName: "Activity Planner",
       watchedAppName: "Activity Planner by Grygorii Shevchenko",
+      isFetching:false,
+      error: null,
       user: {},
-      activities: {}
+      filter: 'all',
+      activities,
+      categories
     };
   },
   computed: {
+    filteredActivities() {
+      let condition
+      
+      if(this.filter === 'all') {
+        return this.activities;
+      } 
+      
+      if(this.filter === 'inprogress') {
+        condition = value => value > 0 && value < 100
+      } else if(this.filter === 'finished') {
+        condition = value => value === 100
+      } else  {
+        condition = value => value === 0
+      } 
+
+      return Object.values(this.activities)
+        .filter(activity => condition(activity.progress)) 
+
+    },
     fullAppName() {
       return `${this.appName} by ${this.creator}`;
     },
@@ -71,24 +101,38 @@ export default {
       } else {
         return `No activities, so sad :(`;
       }
+    },
+    activitiesLength(){
+      return Object.keys(this.activities).length;
+    },
+    categoriesLength(){
+      return Object.keys(this.categories).length;
+    },
+    isDataLoaded(){
+      return this.activitiesLength && this.categoriesLength
     }
   },
   created() {
-    fetchActivities()
+    // fakeApi.fillDB();
+
+    this.isFetching = true
+    store.fetchActivities()
       .then((activities) => {
-        this.activities = activities;
+        this.isFetching = false;
       })
-      .catch(error => {
-        console.log(error);
+      .catch(err => {
+        this.error = err;
+        this.isFetching = false;
+      })
 
+    this.user = store.fetchUser()
+    store.fetchCategories()
+      .then(categories => {
       });
-
-    this.user = fetchUser();
-    this.categories = fetchCategories();
   },
-  methods: {
-    addActivity(newActivity){
-      Vue.set(this.activities, newActivity.id, newActivity);
+  methods:{
+    setFilter(filterOption){
+      this.filter = filterOption
     }
   }
 };
@@ -109,6 +153,14 @@ body {
 }
 footer {
   background-color: #f2f6fa !important;
+}
+
+.fetching {
+  border: 2px solid orange;
+}
+
+.has-error {
+  border: 2px solid red;
 }
 .activity-length {
   display: inline-block;
