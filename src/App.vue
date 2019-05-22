@@ -113,7 +113,7 @@ export default {
     }
   },
   created() {
-    // fakeApi.fillDB();
+    fakeApi.fillDB();
 
     this.isFetching = true
     store.fetchActivities()
