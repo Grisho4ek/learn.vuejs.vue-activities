@@ -64,8 +64,8 @@ class FakeApi {
   }
 
   post(resource, item) {
+    const data = this.getData();
     return new Promise((resolve, reject) => {
-      const data = this.getData();
       data[resource][item.id] = item;
       this.commitData(data);
       resolve(item);
